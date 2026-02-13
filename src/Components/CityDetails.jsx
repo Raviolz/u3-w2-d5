@@ -31,7 +31,7 @@ const CityDetails = () => {
       .catch((error) => console.log(error))
   }, [cityId])
   if (!cityData) {
-    // finche non carica rimane null e non va niente
+    // funziona? boh
     return (
       <Container className="py-5 text-center flex-grow-1">
         <p className="text-muted">Loading city details...</p>
@@ -73,8 +73,11 @@ const CityDetails = () => {
             </div>
           </div>
 
-          <Button className="weather-btn mt-auto mb-4 w-50 align-self-center" onClick={() => navigate("/")}>
+          <Button className="weather-btn mt-auto mb-1 w-50 align-self-center" onClick={() => navigate("/")}>
             Back
+          </Button>
+          <Button className="weather-btn mt-3 w-50 align-self-center" onClick={() => navigate(`/city/${cityId}/forecast`)}>
+            View 5-Day Forecast
           </Button>
         </Card.Body>
       </Card>

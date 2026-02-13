@@ -6,6 +6,7 @@ import WHomepage from "./Components/WHomepage"
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import CityDetails from "./Components/CityDetails"
 import NotFound from "./Components/NotFound"
+import Forecasts from "./Components/Forecasts"
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Route path="/" element={<WHomepage />} />
             <Route path="/city/:cityId" element={<CityDetails />} />
             <Route path="*" element={<NotFound />} />
+            <Route path="/city/:cityId/forecast" element={<Forecasts />} />
           </Routes>
         </main>
         <WFooter />

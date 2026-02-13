@@ -8,7 +8,7 @@ const WNavBar = () => {
   return (
     <Navbar expand="lg" className="bg-white weather-nav">
       <Container fluid>
-        <Navbar.Brand href="#home" className="d-flex align-items-center gap-2">
+        <Navbar.Brand as={Link} to="/" className="d-flex align-items-center gap-2">
           <img src="/logoW.JPG" width="40" height="40" alt="Weather App Logo" />
         </Navbar.Brand>
 
@@ -16,12 +16,12 @@ const WNavBar = () => {
         <Navbar.Collapse id="main-nav" className="order-3 order-lg-2">
           <Nav className="me-auto">
             <Nav.Link as={Link} to="/" className={location.pathname === "/" ? "active" : ""}>
+              {/* as link tentativo di risoluzione hover active colore non riuscito */}
               Home
             </Nav.Link>
-
-            <Link to="/forecast" className={location.pathname === "/forecast" ? "nav-link active" : "nav-link"}>
+            <Nav.Link as={Link} to="/city/3173435/forecast">
               Forecast
-            </Link>
+            </Nav.Link>
           </Nav>
         </Navbar.Collapse>
 

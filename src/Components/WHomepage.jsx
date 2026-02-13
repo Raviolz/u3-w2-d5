@@ -2,14 +2,17 @@ import Container from "react-bootstrap/Container"
 import Row from "react-bootstrap/Row"
 import Col from "react-bootstrap/Col"
 import Card from "react-bootstrap/Card"
+import Button from "react-bootstrap/Button"
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 
 const apiKey = "10006716088e501331dec8ba55214e5f"
 const baseUrl = "https://api.openweathermap.org/data/2.5/weather"
 
-const cities = ["San Francisco,US", "New York,US", "Milan,IT", "Sydney,AU"]
+const cities = ["San Francisco,US", "Mexico City,MX", "New York,US", "Milan,IT", "Moscow,RU", "New Delhi,IN", "Perth,AU", "Tokyo,JP"]
 
 const WHomepage = () => {
+  const navigate = useNavigate()
   const [weatherList, setWeatherList] = useState([]) // per settare stato
 
   useEffect(() => {
@@ -54,13 +57,12 @@ const WHomepage = () => {
           <Col md={6} lg={3} key={cityData.id}>
             <Card className="weather-card shadow-sm h-100 text-center">
               <Card.Body>
-                <Card.Title className="fw-semibold">{cityData.name}</Card.Title>
+                <Card.Title className="fw-semibold fs-2 card-title">{cityData.name}</Card.Title>
                 <div className="fs-2 fw-bold">{Math.round(cityData.main.temp)}°C</div> {/*  arrotondamento */}
                 <Card.Text className="text-capitalize text-muted mb-2">{cityData.weather[0].description}</Card.Text> {/*  ha un array */}
-                <div className="small">
-                  <span className="me-2">Min: {Math.round(cityData.main.temp_min)}°C</span>
-                  <span>Max: {Math.round(cityData.main.temp_max)}°C</span>
-                </div>
+                <Button className="weather-btn w-100 d-flex justify-content-center" onClick={() => navigate(`/city/${cityData.id}`)}>
+                  Show more
+                </Button>
               </Card.Body>
             </Card>
           </Col>

@@ -2,7 +2,9 @@ import Container from "react-bootstrap/Container"
 import Nav from "react-bootstrap/Nav"
 import Navbar from "react-bootstrap/Navbar"
 import NavDropdown from "react-bootstrap/NavDropdown"
+import { Link, useLocation } from "react-router-dom"
 const WNavBar = () => {
+  const location = useLocation()
   return (
     <Navbar expand="lg" className="bg-white weather-nav">
       <Container fluid>
@@ -13,8 +15,13 @@ const WNavBar = () => {
         {/* DESKTOP:  */}
         <Navbar.Collapse id="main-nav" className="order-3 order-lg-2">
           <Nav className="me-auto">
-            <Nav.Link href="#home">Home</Nav.Link>
-            <Nav.Link href="#previsioni">Forecasts</Nav.Link>
+            <Nav.Link as={Link} to="/" className={location.pathname === "/" ? "active" : ""}>
+              Home
+            </Nav.Link>
+
+            <Link to="/forecast" className={location.pathname === "/forecast" ? "nav-link active" : "nav-link"}>
+              Forecast
+            </Link>
           </Nav>
         </Navbar.Collapse>
 

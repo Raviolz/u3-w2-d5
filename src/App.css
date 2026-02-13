@@ -1,0 +1,35 @@
+.weather-nav {
+  border-bottom: 2px solid #ff8c00;
+}
+
+.weather-nav .nav-link {
+  transition: color 150ms ease;
+}
+.weather-nav .nav-link:hover,
+.weather-nav .nav-link:focus {
+  color: #ff8c00;
+}
+.page-bg {
+  background: #f2f8ff;
+  border-radius: 16px;
+}
+.weather-title {
+  color: #ffb300;
+}
+.card.weather-card {
+  border: 4px solid rgba(255, 140, 0, 0.35);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.card.weather-card:hover {
+  transform: translateY(-4px) scale(1.02);
+
+  border-color: rgba(255, 140, 0, 0.8);
+}
+.weather-footer {
+  border-top: 2px solid #ff8c00;
+}

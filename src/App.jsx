@@ -1,8 +1,17 @@
 import "./App.css"
-import "bootstrap/dist/css/bootstrap.min.css"
+
+import WNavBar from "./Components/WNavBar"
+import WFooter from "./Components/WFooter"
+import WHomepage from "./Components/WHomepage"
 
 function App() {
-  return <></>
+  return (
+    <>
+      <WNavBar />
+      <WHomepage />
+      <WFooter />
+    </>
+  )
 }
 
 export default App

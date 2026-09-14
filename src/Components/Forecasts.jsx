@@ -1,56 +1,65 @@
 import { useEffect, useState } from "react"
+
 import { useParams, useNavigate } from "react-router-dom"
+
 import Container from "react-bootstrap/Container"
 import Row from "react-bootstrap/Row"
 import Col from "react-bootstrap/Col"
 import Card from "react-bootstrap/Card"
 import Button from "react-bootstrap/Button"
+import Spinner from "react-bootstrap/Spinner"
 
-const apiKey = "10006716088e501331dec8ba55214e5f"
-const baseUrl = "https://api.openweathermap.org/data/2.5/forecast"
+import { getForecastById } from "../services/weatherApi"
 
 const Forecasts = () => {
   const { cityId } = useParams()
   const navigate = useNavigate()
 
   const [cityName, setCityName] = useState("")
+
   const [dailyForecast, setDailyForecast] = useState([])
-  const [loading, setLoading] = useState(false)
+
+  const [loading, setLoading] = useState(true)
+
+  const [error, setError] = useState("")
 
   useEffect(() => {
-    const url = `${baseUrl}?id=${cityId}&units=metric&lang=en&appid=${apiKey}`
+    const loadForecast = async () => {
+      try {
+        setLoading(true)
+        setError("")
 
-    fetch(url)
-      .then((response) => {
-        if (response.ok) {
-          return response.json()
-        } else {
-          throw new Error("Errore ")
-        }
-      })
-      .then((data) => {
-        console.log("DATA:", data)
+        const data = await getForecastById(cityId)
 
         setCityName(data.city?.name || "")
 
-        const fiveDays = data.list.filter((item) => item.dt_txt.includes("15:00:00")) // tot 40 risultati...prendo meta' giornata per tutti
-        console.log(fiveDays)
+        const fiveDays = data.list.filter((item) => item.dt_txt.includes("15:00:00"))
+
         setDailyForecast(fiveDays)
-      })
-      .catch((err) => console.log(err))
-      .finally(() => setLoading(false)) // trovato finally online ancora non sicura se lo sto usando giusto
+      } catch (error) {
+        setError(error.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadForecast()
   }, [cityId])
 
   return (
-    <Container fluid className="py-5 flex-grow-1">
-      <div className="text-center mb-4">
-        <h1 className="fw-bold weather-title">{cityName ? `Forecast for ${cityName}` : ""}</h1>
-        <p className="text-muted">Do you need an umbrella?</p>
+    <Container className="forecast-page py-5 flex-grow-1">
+      <div className="forecast-heading">
+        <span className="section-label">5 day forecast</span>
+
+        <h1>{cityName || "Forecast"}</h1>
+
+        <p>Do you need an umbrella?</p>
       </div>
 
-      <div className="d-flex justify-content-center mb-4 gap-2">
+      <div className="forecast-actions">
         <Button className="weather-btn" onClick={() => navigate(`/city/${cityId}`)}>
-          Back to Details
+          <i className="bi bi-arrow-left me-2"></i>
+          Current weather
         </Button>
 
         <Button className="weather-btn" onClick={() => navigate("/")}>
@@ -58,12 +67,20 @@ const Forecasts = () => {
         </Button>
       </div>
 
-      {loading && <div className="text-center text-muted">Loading forecast...</div>}
+      {loading && (
+        <div className="loading-weather">
+          <Spinner animation="border" />
+          <span>Loading forecast...</span>
+        </div>
+      )}
 
-      {!loading && (
-        <Row className="g-4 justify-content-center">
+      {!loading && error && <div className="weather-message">{error}</div>}
+
+      {!loading && !error && (
+        <Row className="g-4 justify-content-center mt-2">
           {dailyForecast.map((item) => {
-            const weather = item.weather?.[0]
+            const weather = item.weather[0]
+
             const iconUrl = `https://openweathermap.org/img/wn/${weather.icon}@2x.png`
 
             const dateLabel = new Date(item.dt_txt).toLocaleDateString("en-US", {
@@ -73,16 +90,16 @@ const Forecasts = () => {
             })
 
             return (
-              <Col key={item.dt} xs={12} md={6} lg={3} xl={2}>
-                <Card className="weather-card shadow-sm h-100 text-center">
-                  <Card.Body>
-                    <Card.Title className="fw-bold mb-2">{dateLabel}</Card.Title>
+              <Col key={item.dt} xs={12} sm={6} lg>
+                <Card className="weather-card forecast-card h-100">
+                  <Card.Body className="text-center">
+                    <Card.Title className="forecast-date">{dateLabel}</Card.Title>
 
-                    <img src={iconUrl} alt={weather.description} />
+                    <img src={iconUrl} alt={weather.description} className="forecast-icon" />
 
-                    <div className="fs-3 fw-bold">{Math.round(item.main.temp)}°C</div>
+                    <div className="forecast-temperature">{Math.round(item.main.temp)}°</div>
 
-                    <div className="text-muted text-capitalize">{weather.description}</div>
+                    <div className="weather-description">{weather.description}</div>
                   </Card.Body>
                 </Card>
               </Col>

@@ -1,84 +1,125 @@
 import { useEffect, useState } from "react"
-import { useParams } from "react-router-dom"
+
+import { useNavigate, useParams } from "react-router-dom"
+
 import Container from "react-bootstrap/Container"
 import Card from "react-bootstrap/Card"
 import Button from "react-bootstrap/Button"
-import { useNavigate } from "react-router-dom"
+import Spinner from "react-bootstrap/Spinner"
 
-const apiKey = "10006716088e501331dec8ba55214e5f"
-const baseUrl = "https://api.openweathermap.org/data/2.5/weather"
+import { getCurrentWeatherById } from "../services/weatherApi"
 
 const CityDetails = () => {
   const { cityId } = useParams()
-  const [cityData, setCityData] = useState(null)
   const navigate = useNavigate()
 
-  useEffect(() => {
-    const url = `${baseUrl}?id=${cityId}&units=metric&lang=en&appid=${apiKey}`
+  const [cityData, setCityData] = useState(null)
 
-    fetch(url)
-      .then((response) => {
-        if (response.ok) {
-          return response.json()
-        } else {
-          throw new Error("Errore nella response")
-        }
-      })
-      .then((data) => {
+  const [loading, setLoading] = useState(true)
+
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    const loadCity = async () => {
+      try {
+        setLoading(true)
+        setError("")
+
+        const data = await getCurrentWeatherById(cityId)
+
         setCityData(data)
-        console.log("dati", data)
-      })
-      .catch((error) => console.log(error))
+      } catch (error) {
+        setError(error.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadCity()
   }, [cityId])
-  if (!cityData) {
-    // funziona? boh
+
+  if (loading) {
     return (
       <Container className="py-5 text-center flex-grow-1">
-        <p className="text-muted">Loading city details...</p>
+        <Spinner animation="border" />
+
+        <p className="mt-3">Loading city details...</p>
       </Container>
     )
   }
 
+  if (error) {
+    return (
+      <Container className="py-5 text-center flex-grow-1">
+        <h2>Something went wrong</h2>
+
+        <p>{error}</p>
+
+        <Button className="weather-btn" onClick={() => navigate("/")}>
+          Back home
+        </Button>
+      </Container>
+    )
+  }
+
+  if (!cityData) {
+    return null
+  }
+
   const weather = cityData.weather[0]
+
+  const iconUrl = `https://openweathermap.org/img/wn/${weather.icon}@2x.png`
 
   return (
     <Container className="py-5 d-flex justify-content-center flex-grow-1">
-      <Card className="weather-card shadow-lg details-card text-center d-flex">
-        <Card.Body className="d-flex flex-column">
-          <Card.Title className="city-title fs-2 fw-bold mb-3">{cityData.name}</Card.Title>
+      <Card className="weather-card details-card">
+        <Card.Body className="p-4 p-md-5 d-flex flex-column">
+          <div className="details-country">{cityData.sys.country}</div>
 
-          <div className="fs-1 fw-bold mb-2">{Math.round(cityData.main.temp)}°C</div>
+          <Card.Title className="city-title">{cityData.name}</Card.Title>
 
-          <Card.Text className="text-capitalize text-muted mb-4">{weather.description}</Card.Text>
+          <img src={iconUrl} alt={weather.description} className="details-weather-icon" />
 
-          <div className="d-flex justify-content-center gap-4 flex-wrap mt-4">
+          <div className="details-temperature">
+            {Math.round(cityData.main.temp)}
+            °C
+          </div>
+
+          <Card.Text className="weather-description fs-5">{weather.description}</Card.Text>
+
+          <div className="details-data">
             <div>
-              <div className="text-muted small">Min</div>
-              <div className="fw-semibold">{Math.round(cityData.main.temp_min)}°C</div>
+              <span>Min</span>
+              <strong>{Math.round(cityData.main.temp_min)}°</strong>
             </div>
 
             <div>
-              <div className="text-muted small">Max</div>
-              <div className="fw-semibold">{Math.round(cityData.main.temp_max)}°C</div>
+              <span>Max</span>
+              <strong>{Math.round(cityData.main.temp_max)}°</strong>
             </div>
 
             <div>
-              <div className="text-muted small">Humidity</div>
-              <div className="fw-semibold">{cityData.main.humidity}%</div>
+              <span>Humidity</span>
+              <strong>{cityData.main.humidity}%</strong>
             </div>
 
             <div>
-              <div className="text-muted small">Wind</div>
-              <div className="fw-semibold">{cityData.wind.speed} m/s</div>
+              <span>Wind</span>
+              <strong>{cityData.wind.speed} m/s</strong>
             </div>
           </div>
 
-          <Button className="weather-btn mt-auto mb-1 w-50 align-self-center" onClick={() => navigate("/")}>
-            Back
-          </Button>
-          <Button className="weather-btn mt-3 w-50 align-self-center" onClick={() => navigate(`/city/${cityId}/forecast`)}>
-            View 5-Day Forecast
-          </Button>
+          <div className="d-flex flex-column flex-sm-row gap-3 mt-5">
+            <Button className="weather-btn flex-grow-1" onClick={() => navigate("/")}>
+              <i className="bi bi-arrow-left me-2"></i>
+              Back
+            </Button>
+
+            <Button className="weather-btn weather-btn-primary flex-grow-1" onClick={() => navigate(`/city/${cityId}/forecast`)}>
+              View forecast
+              <i className="bi bi-arrow-right ms-2"></i>
+            </Button>
+          </div>
         </Card.Body>
       </Card>
     </Container>

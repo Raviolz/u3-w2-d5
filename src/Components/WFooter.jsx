@@ -2,13 +2,14 @@ import Container from "react-bootstrap/Container"
 
 const WFooter = () => {
   return (
-    <footer className="bg-white  py-4 mt-auto weather-footer">
-      <Container className="text-center text-muted">
-        <p className="mb-1 fw-semibold text-primary">Weather App ☀️</p>
+    <footer className="weather-footer mt-auto">
+      <Container className="py-4 d-flex flex-column flex-md-row align-items-center justify-content-between gap-2">
+        <div className="footer-brand">
+          Weather
+          <span>App</span>
+        </div>
 
-        <p className="mb-2 small">Accurate and real-time weather forecasts.</p>
-
-        <div className="small">© Weather App. All rights reserved.</div>
+        <div className="footer-copy">Weather data provided by OpenWeather</div>
       </Container>
     </footer>
   )

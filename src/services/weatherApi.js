@@ -1,19 +1,21 @@
 const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY
 const BASE_URL = "https://api.openweathermap.org/data/2.5"
 
-const requestWeather = async (endpoint, params = {}) => {
+const requestWeather = async (endpoint, params = {}, units = "metric") => {
   if (!API_KEY) {
-    throw new Error("Missing OpenWeather API key. Add VITE_OPENWEATHER_API_KEY to your .env file.")
+    throw new Error("Missing OpenWeather API key. Add it to your .env file.")
   }
 
   const url = new URL(`${BASE_URL}/${endpoint}`)
 
-  Object.entries({
+  const allParams = {
     ...params,
-    units: "metric",
+    units,
     lang: "en",
     appid: API_KEY,
-  }).forEach(([key, value]) => {
+  }
+
+  Object.entries(allParams).forEach(([key, value]) => {
     url.searchParams.set(key, value)
   })
 
@@ -30,18 +32,25 @@ const requestWeather = async (endpoint, params = {}) => {
   return response.json()
 }
 
-export const getCurrentWeatherByCity = (city) => {
-  return requestWeather("weather", { q: city })
+export const getCurrentWeatherByCity = (city, units = "metric") => {
+  return requestWeather("weather", { q: city }, units)
 }
 
-export const getCurrentWeatherById = (cityId) => {
-  return requestWeather("weather", { id: cityId })
+export const getCurrentWeatherById = (cityId, units = "metric") => {
+  return requestWeather("weather", { id: cityId }, units)
 }
 
-export const getForecastById = (cityId) => {
-  return requestWeather("forecast", { id: cityId })
+export const getForecastById = (cityId, units = "metric") => {
+  return requestWeather("forecast", { id: cityId }, units)
 }
 
-export const getCurrentWeatherByCoords = (lat, lon) => {
-  return requestWeather("weather", { lat, lon })
+export const getCurrentWeatherByCoords = (lat, lon, units = "metric") => {
+  return requestWeather(
+    "weather",
+    {
+      lat,
+      lon,
+    },
+    units,
+  )
 }

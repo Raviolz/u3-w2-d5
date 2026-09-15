@@ -5,7 +5,7 @@ import NavDropdown from "react-bootstrap/NavDropdown"
 
 import { Link, useLocation } from "react-router-dom"
 
-const WNavBar = () => {
+const WNavBar = ({ unit, onUnitChange }) => {
   const location = useLocation()
 
   const isForecastActive = location.pathname === "/forecast" || location.pathname.includes("/forecast")
@@ -28,6 +28,16 @@ const WNavBar = () => {
             <Nav.Link as={Link} to="/forecast" className={isForecastActive ? "active" : ""}>
               Forecast
             </Nav.Link>
+
+            <div className="unit-toggle">
+              <button type="button" className={unit === "metric" ? "unit-option active" : "unit-option"} onClick={() => onUnitChange("metric")}>
+                °C
+              </button>
+
+              <button type="button" className={unit === "imperial" ? "unit-option active" : "unit-option"} onClick={() => onUnitChange("imperial")}>
+                °F
+              </button>
+            </div>
 
             <NavDropdown
               align="end"

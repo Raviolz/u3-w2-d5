@@ -10,13 +10,19 @@ import { getCurrentWeatherById } from "../services/weatherApi"
 
 import { formatLocalDate, formatLocalTime, formatVisibility } from "../utils/weatherUtils"
 
-const CityDetails = () => {
+import { addFavoriteCity, isFavoriteCity, removeFavoriteCity } from "../utils/storageUtils"
+
+const CityDetails = ({ unit }) => {
   const { cityId } = useParams()
   const navigate = useNavigate()
 
   const [cityData, setCityData] = useState(null)
+
   const [loading, setLoading] = useState(true)
+
   const [error, setError] = useState("")
+
+  const [favorite, setFavorite] = useState(false)
 
   useEffect(() => {
     const loadCity = async () => {
@@ -24,9 +30,11 @@ const CityDetails = () => {
         setLoading(true)
         setError("")
 
-        const data = await getCurrentWeatherById(cityId)
+        const data = await getCurrentWeatherById(cityId, unit)
 
         setCityData(data)
+
+        setFavorite(isFavoriteCity(data.id))
       } catch (error) {
         setError(error.message)
       } finally {
@@ -35,7 +43,27 @@ const CityDetails = () => {
     }
 
     loadCity()
-  }, [cityId])
+  }, [cityId, unit])
+
+  const toggleFavorite = () => {
+    if (!cityData) {
+      return
+    }
+
+    if (favorite) {
+      removeFavoriteCity(cityData.id)
+
+      setFavorite(false)
+    } else {
+      addFavoriteCity({
+        id: cityData.id,
+        name: cityData.name,
+        country: cityData.sys.country,
+      })
+
+      setFavorite(true)
+    }
+  }
 
   if (loading) {
     return (
@@ -82,6 +110,8 @@ const CityDetails = () => {
 
   const sunset = formatLocalTime(cityData.sys.sunset, cityData.timezone)
 
+  const windUnit = unit === "metric" ? "m/s" : "mph"
+
   return (
     <div className="city-details-page w-100">
       <Container className="py-5">
@@ -90,7 +120,19 @@ const CityDetails = () => {
             <div>
               <span className="details-country">{cityData.sys.country}</span>
 
-              <h1>{cityData.name}</h1>
+              <div className="city-title-row">
+                <h1>{cityData.name}</h1>
+
+                <button
+                  type="button"
+                  className={favorite ? "favorite-button active" : "favorite-button"}
+                  onClick={toggleFavorite}
+                  aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
+                  title={favorite ? "Remove from favorites" : "Add to favorites"}
+                >
+                  <i className={favorite ? "bi bi-star-fill" : "bi bi-star"}></i>
+                </button>
+              </div>
 
               <p className="city-local-time">
                 {localDate}
@@ -176,7 +218,9 @@ const CityDetails = () => {
 
               <span className="info-label">Wind</span>
 
-              <strong className="info-value">{cityData.wind.speed} m/s</strong>
+              <strong className="info-value">
+                {cityData.wind.speed} {windUnit}
+              </strong>
             </article>
 
             <article className="weather-info-card">
@@ -222,7 +266,7 @@ const CityDetails = () => {
         </section>
 
         <section className="sun-section">
-          <div className="sun-card sunrise-card">
+          <div className="sun-card">
             <div className="sun-icon">
               <i className="bi bi-sunrise-fill"></i>
             </div>

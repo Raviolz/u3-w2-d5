@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 
-import { useParams, useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 
 import Container from "react-bootstrap/Container"
 import Button from "react-bootstrap/Button"
@@ -10,7 +10,7 @@ import { getForecastById } from "../services/weatherApi"
 
 import { buildDailyForecast, formatForecastDay, formatForecastHour } from "../utils/weatherUtils"
 
-const Forecasts = () => {
+const Forecasts = ({ unit }) => {
   const { cityId } = useParams()
   const navigate = useNavigate()
 
@@ -26,7 +26,7 @@ const Forecasts = () => {
         setLoading(true)
         setError("")
 
-        const data = await getForecastById(cityId)
+        const data = await getForecastById(cityId, unit)
 
         setForecastData(data)
       } catch (error) {
@@ -37,7 +37,7 @@ const Forecasts = () => {
     }
 
     loadForecast()
-  }, [cityId])
+  }, [cityId, unit])
 
   if (loading) {
     return (

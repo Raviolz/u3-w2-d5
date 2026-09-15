@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+
 import { useNavigate } from "react-router-dom"
 
 import Container from "react-bootstrap/Container"
@@ -11,9 +12,11 @@ import Spinner from "react-bootstrap/Spinner"
 
 import { getCurrentWeatherByCity } from "../services/weatherApi"
 
+import { addRecentSearch, getFavorites, getRecentSearches } from "../utils/storageUtils"
+
 const cities = ["San Francisco,US", "Mexico City,MX", "New York,US", "Milan,IT", "Moscow,RU", "New Delhi,IN", "Perth,AU", "Tokyo,JP"]
 
-const WHomepage = () => {
+const WHomepage = ({ unit }) => {
   const navigate = useNavigate()
 
   const [weatherList, setWeatherList] = useState([])
@@ -28,13 +31,26 @@ const WHomepage = () => {
 
   const [citiesError, setCitiesError] = useState("")
 
+  const [favorites, setFavorites] = useState([])
+
+  const [recentSearches, setRecentSearches] = useState([])
+
+  const [homeCity, setHomeCity] = useState("")
+
+  useEffect(() => {
+    setFavorites(getFavorites())
+    setRecentSearches(getRecentSearches())
+
+    setHomeCity(localStorage.getItem("weatherHomeCity") || "")
+  }, [])
+
   useEffect(() => {
     const loadCities = async () => {
       try {
         setLoading(true)
         setCitiesError("")
 
-        const results = await Promise.allSettled(cities.map((city) => getCurrentWeatherByCity(city)))
+        const results = await Promise.allSettled(cities.map((city) => getCurrentWeatherByCity(city, unit)))
 
         const availableCities = results.filter((result) => result.status === "fulfilled").map((result) => result.value)
 
@@ -49,7 +65,36 @@ const WHomepage = () => {
     }
 
     loadCities()
-  }, [])
+  }, [unit])
+
+  const openSearchResult = (cityData) => {
+    const city = {
+      id: cityData.id,
+      name: cityData.name,
+      country: cityData.sys.country,
+    }
+
+    const updated = addRecentSearch(city)
+
+    setRecentSearches(updated)
+
+    navigate(`/city/${cityData.id}`)
+  }
+
+  const searchCity = async (cityName) => {
+    try {
+      setSearchLoading(true)
+      setSearchError("")
+
+      const data = await getCurrentWeatherByCity(cityName, unit)
+
+      openSearchResult(data)
+    } catch (error) {
+      setSearchError(error.message)
+    } finally {
+      setSearchLoading(false)
+    }
+  }
 
   const handleSearch = async (event) => {
     event.preventDefault()
@@ -58,21 +103,11 @@ const WHomepage = () => {
 
     if (!city) {
       setSearchError("Write the name of a city first.")
+
       return
     }
 
-    try {
-      setSearchLoading(true)
-      setSearchError("")
-
-      const data = await getCurrentWeatherByCity(city)
-
-      navigate(`/city/${data.id}`)
-    } catch (error) {
-      setSearchError(error.message)
-    } finally {
-      setSearchLoading(false)
-    }
+    await searchCity(city)
   }
 
   return (
@@ -108,6 +143,31 @@ const WHomepage = () => {
                 {searchError}
               </div>
             )}
+
+            {(homeCity || favorites.length > 0 || recentSearches.length > 0) && (
+              <div className="quick-weather-links">
+                {homeCity && (
+                  <button type="button" className="quick-city home-city-chip" onClick={() => searchCity(homeCity)}>
+                    <i className="bi bi-house-fill"></i>
+                    {homeCity}
+                  </button>
+                )}
+
+                {favorites.slice(0, 3).map((city) => (
+                  <button type="button" className="quick-city" key={`favorite-${city.id}`} onClick={() => navigate(`/city/${city.id}`)}>
+                    <i className="bi bi-star-fill"></i>
+                    {city.name}
+                  </button>
+                ))}
+
+                {recentSearches.slice(0, 3).map((city) => (
+                  <button type="button" className="quick-city recent-city-chip" key={`recent-${city.id}`} onClick={() => navigate(`/city/${city.id}`)}>
+                    <i className="bi bi-clock-history"></i>
+                    {city.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="hero-weather-art">
@@ -115,7 +175,7 @@ const WHomepage = () => {
 
             <i className="bi bi-cloud-sun-fill hero-weather-icon"></i>
 
-            <span className="hero-temp">24°</span>
+            <span className="hero-temp">{unit === "metric" ? "24°" : "75°"}</span>
           </div>
         </section>
 
@@ -133,6 +193,7 @@ const WHomepage = () => {
           {loading && (
             <div className="loading-weather">
               <Spinner animation="border" />
+
               <span>Loading weather...</span>
             </div>
           )}

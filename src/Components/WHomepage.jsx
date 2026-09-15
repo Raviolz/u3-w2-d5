@@ -10,7 +10,7 @@ import Button from "react-bootstrap/Button"
 import Form from "react-bootstrap/Form"
 import Spinner from "react-bootstrap/Spinner"
 
-import { getCurrentWeatherByCity } from "../services/weatherApi"
+import { getCurrentWeatherByCity, getCurrentWeatherByCoords } from "../services/weatherApi"
 
 import { addRecentSearch, getFavorites, getRecentSearches } from "../utils/storageUtils"
 
@@ -27,6 +27,8 @@ const WHomepage = ({ unit }) => {
 
   const [searchLoading, setSearchLoading] = useState(false)
 
+  const [locationLoading, setLocationLoading] = useState(false)
+
   const [searchError, setSearchError] = useState("")
 
   const [citiesError, setCitiesError] = useState("")
@@ -39,6 +41,7 @@ const WHomepage = ({ unit }) => {
 
   useEffect(() => {
     setFavorites(getFavorites())
+
     setRecentSearches(getRecentSearches())
 
     setHomeCity(localStorage.getItem("weatherHomeCity") || "")
@@ -110,6 +113,54 @@ const WHomepage = ({ unit }) => {
     await searchCity(city)
   }
 
+  const handleLocation = () => {
+    setSearchError("")
+
+    if (!navigator.geolocation) {
+      setSearchError("Geolocation is not supported by your browser.")
+
+      return
+    }
+
+    setLocationLoading(true)
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords
+
+          const data = await getCurrentWeatherByCoords(latitude, longitude, unit)
+
+          openSearchResult(data)
+        } catch (error) {
+          setSearchError(error.message)
+
+          setLocationLoading(false)
+        }
+      },
+
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          setSearchError("Location permission was denied. You can still search for a city manually.")
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          setSearchError("Your location is currently unavailable.")
+        } else if (error.code === error.TIMEOUT) {
+          setSearchError("Finding your location took too long. Please try again.")
+        } else {
+          setSearchError("We couldn't access your location.")
+        }
+
+        setLocationLoading(false)
+      },
+
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 300000,
+      },
+    )
+  }
+
   return (
     <div className="home-page w-100">
       <Container className="py-5">
@@ -127,19 +178,40 @@ const WHomepage = ({ unit }) => {
 
             <Form className="weather-search" onSubmit={handleSearch}>
               <div className="search-input-wrapper">
-                <i className="bi bi-search"></i>
+                <i className="bi bi-search" aria-hidden="true"></i>
 
-                <Form.Control type="search" value={query} placeholder="Search a city..." onChange={(event) => setQuery(event.target.value)} />
+                <Form.Control
+                  type="search"
+                  value={query}
+                  placeholder="Search a city..."
+                  aria-label="Search a city"
+                  onChange={(event) => setQuery(event.target.value)}
+                />
               </div>
 
-              <Button type="submit" className="weather-search-btn" disabled={searchLoading}>
+              <Button type="submit" className="weather-search-btn" disabled={searchLoading || locationLoading}>
                 {searchLoading ? <Spinner animation="border" size="sm" /> : "Search"}
               </Button>
             </Form>
 
+            <button type="button" className="location-button" onClick={handleLocation} disabled={locationLoading || searchLoading}>
+              {locationLoading ? (
+                <>
+                  <Spinner animation="border" size="sm" />
+                  Finding your location...
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-geo-alt-fill" aria-hidden="true"></i>
+                  Use my location
+                </>
+              )}
+            </button>
+
             {searchError && (
-              <div className="search-error">
-                <i className="bi bi-exclamation-circle me-2"></i>
+              <div className="search-error" role="alert" aria-live="polite">
+                <i className="bi bi-exclamation-circle me-2" aria-hidden="true"></i>
+
                 {searchError}
               </div>
             )}
@@ -148,21 +220,24 @@ const WHomepage = ({ unit }) => {
               <div className="quick-weather-links">
                 {homeCity && (
                   <button type="button" className="quick-city home-city-chip" onClick={() => searchCity(homeCity)}>
-                    <i className="bi bi-house-fill"></i>
+                    <i className="bi bi-house-fill" aria-hidden="true"></i>
+
                     {homeCity}
                   </button>
                 )}
 
                 {favorites.slice(0, 3).map((city) => (
                   <button type="button" className="quick-city" key={`favorite-${city.id}`} onClick={() => navigate(`/city/${city.id}`)}>
-                    <i className="bi bi-star-fill"></i>
+                    <i className="bi bi-star-fill" aria-hidden="true"></i>
+
                     {city.name}
                   </button>
                 ))}
 
                 {recentSearches.slice(0, 3).map((city) => (
                   <button type="button" className="quick-city recent-city-chip" key={`recent-${city.id}`} onClick={() => navigate(`/city/${city.id}`)}>
-                    <i className="bi bi-clock-history"></i>
+                    <i className="bi bi-clock-history" aria-hidden="true"></i>
+
                     {city.name}
                   </button>
                 ))}
@@ -170,7 +245,7 @@ const WHomepage = ({ unit }) => {
             )}
           </div>
 
-          <div className="hero-weather-art">
+          <div className="hero-weather-art" aria-hidden="true">
             <div className="hero-sun"></div>
 
             <i className="bi bi-cloud-sun-fill hero-weather-icon"></i>
@@ -187,7 +262,7 @@ const WHomepage = ({ unit }) => {
               <h2>Weather around the world</h2>
             </div>
 
-            <i className="bi bi-globe-americas section-globe"></i>
+            <i className="bi bi-globe-americas section-globe" aria-hidden="true"></i>
           </div>
 
           {loading && (
@@ -198,7 +273,11 @@ const WHomepage = ({ unit }) => {
             </div>
           )}
 
-          {!loading && citiesError && <div className="weather-message">{citiesError}</div>}
+          {!loading && citiesError && (
+            <div className="weather-message" role="alert">
+              {citiesError}
+            </div>
+          )}
 
           {!loading && !citiesError && (
             <Row className="g-4">
@@ -225,16 +304,20 @@ const WHomepage = ({ unit }) => {
 
                         <div className="small-weather-data">
                           <span>
-                            <i className="bi bi-droplet-fill"></i>
+                            <i className="bi bi-droplet-fill" aria-hidden="true"></i>
                             {cityData.main.humidity}%
                           </span>
 
                           <span>Feels {Math.round(cityData.main.feels_like)}°</span>
                         </div>
 
-                        <Button className="weather-btn mt-auto" onClick={() => navigate(`/city/${cityData.id}`)}>
+                        <Button
+                          className="weather-btn mt-auto"
+                          onClick={() => navigate(`/city/${cityData.id}`)}
+                          aria-label={`View weather details for ${cityData.name}`}
+                        >
                           Show more
-                          <i className="bi bi-arrow-right ms-2"></i>
+                          <i className="bi bi-arrow-right ms-2" aria-hidden="true"></i>
                         </Button>
                       </Card.Body>
                     </Card>
